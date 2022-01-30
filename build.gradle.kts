@@ -30,7 +30,7 @@ subprojects {
         }
     }
 
-    version = "1.0.2"
+    version = "1.0.0"
 
 
     tasks.withType<KotlinCompile> {

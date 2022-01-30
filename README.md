@@ -59,17 +59,17 @@ repositories {
 
 dependencies {
   // the api package
-  implementation("org.github.mkep-dev.p-logi-k:api:1.0.1")
+  implementation("org.github.mkep-dev.p-logi-k:api:1.0.0")
   // the core package
-  implementation("org.github.mkep-dev.p-logi-k:core:1.0.1")
+  implementation("org.github.mkep-dev.p-logi-k:core:1.0.0")
   // the package to describe the PLC behaviour with an extended finite state machine (optional) 
-  implementation("org.github.mkep-dev.p-logi-k:fsm-program:1.0.1")
+  implementation("org.github.mkep-dev.p-logi-k:fsm-program:1.0.0")
   // the grpc service client package (optional) (not needed on server side)
-  implementation("org.github.mkep-dev.p-logi-k:services-grpc-client:1.0.1")
+  implementation("org.github.mkep-dev.p-logi-k:services-grpc-client:1.0.0")
   // the grpc service server package (optional)
-  implementation("org.github.mkep-dev.p-logi-k:services-grpc-server:1.0.1")
+  implementation("org.github.mkep-dev.p-logi-k:services-grpc-server:1.0.0")
   // the simulation environment package to create a new simulation environment
-  implementation("org.github.mkep-dev.p-logi-k:simulation-environment:1.0.1")
+  implementation("org.github.mkep-dev.p-logi-k:simulation-environment:1.0.0")
     //...
 }
 // ...
@@ -99,17 +99,17 @@ repositories{
 
 dependencies {
   // the api package
-  implementation("org.github.mkep-dev.p-logi-k:api:1.0.1")
+  implementation("org.github.mkep-dev.p-logi-k:api:1.0.0")
   // the core package
-  implementation("org.github.mkep-dev.p-logi-k:core:1.0.1")
+  implementation("org.github.mkep-dev.p-logi-k:core:1.0.0")
   // the package to describe the PLC behaviour with an extended finite state machine (optional) 
-  implementation("org.github.mkep-dev.p-logi-k:fsm-program:1.0.1")
+  implementation("org.github.mkep-dev.p-logi-k:fsm-program:1.0.0")
   // the grpc service client package (optional) (not needed on server side)
-  implementation("org.github.mkep-dev.p-logi-k:services-grpc-client:1.0.1")
+  implementation("org.github.mkep-dev.p-logi-k:services-grpc-client:1.0.0")
   // the grpc service server package (optional)
-  implementation("org.github.mkep-dev.p-logi-k:services-grpc-server:1.0.1")
+  implementation("org.github.mkep-dev.p-logi-k:services-grpc-server:1.0.0")
   // the simulation environment package to create a new simulation environment
-  implementation("org.github.mkep-dev.p-logi-k:simulation-environment:1.0.1")
+  implementation("org.github.mkep-dev.p-logi-k:simulation-environment:1.0.0")
     //...
 }
 // ...
