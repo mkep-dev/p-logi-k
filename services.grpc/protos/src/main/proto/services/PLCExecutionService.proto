@@ -1,0 +1,70 @@
+/*
+ * P-logi-K. A Kotlin(TM)-based PLC simulation.
+ * Copyright (C)  2022.  Markus Keppeler
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
+ */
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.github.mkep_dev.p_logi_k.services.grpc.stub";
+option java_outer_classname = "PLCExcutionServiceProto";
+
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+import "services/IOs.proto";
+
+package services;
+
+service PLCExecutionService {
+  rpc reset (google.protobuf.Empty) returns (google.protobuf.Empty) {};
+  rpc pause (google.protobuf.Empty) returns (google.protobuf.Empty) {};
+  rpc resetPause (google.protobuf.Empty) returns (google.protobuf.Empty) {};
+  rpc goOn (google.protobuf.Empty) returns (google.protobuf.Empty) {};
+  rpc getState (google.protobuf.Empty) returns (PLCExecutionStateInfo) {};
+  rpc loadProgram(google.protobuf.StringValue) returns (google.protobuf.BoolValue) {};
+  rpc getCurrentProgramName(google.protobuf.Empty) returns (CurrentlyActiveProgramInfo) {};
+  rpc listProgramNames(google.protobuf.Empty) returns (ExistingProgramsList) {};
+  rpc getProgramMeta(google.protobuf.StringValue) returns (ProgramMetaInfo) {};
+}
+
+message PLCExecutionStateInfo{
+  enum State {
+    PAUSED = 0;
+    INIT = 1;
+    RUNNING = 2;
+    RESETTING = 3;
+    ERROR = 4;
+  }
+  State state = 1;
+}
+
+message CurrentlyActiveProgramInfo {
+  bool programActive = 1;
+  string programName = 2;
+}
+
+message ExistingProgramsList {
+  repeated string programName = 1;
+}
+
+message ProgramMetaInfo {
+  // whether there was a program with the given name
+  bool success = 1;
+  string programName = 2;
+  repeated IOElement inputs = 3;
+  repeated IOElement outputs = 4;
+}

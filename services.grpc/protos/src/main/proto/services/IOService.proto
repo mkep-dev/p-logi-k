@@ -1,0 +1,76 @@
+/*
+ * P-logi-K. A Kotlin(TM)-based PLC simulation.
+ * Copyright (C)  2022.  Markus Keppeler
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation version 2.1.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301
+ * USA
+ */
+
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "org.github.mkep_dev.p_logi_k.services.grpc.stub";
+option java_outer_classname = "IOServiceProto";
+
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/empty.proto";
+import "services/IOs.proto";
+
+package services;
+
+service IOService {
+  rpc getIOMap(google.protobuf.Empty) returns (stream IOReference) {};
+  rpc getIOValue(google.protobuf.StringValue) returns (ValueInfo) {};
+  rpc setInput(SetInputRequest) returns (SetInputFeedback) {};
+  rpc findIOsMatchingRegex(google.protobuf.StringValue) returns (stream IOElement) {};
+  rpc registerForInputChanges(SubscriptionRequest) returns (stream IOChange) {};
+  rpc unregisterForInputChanges(UnsubscriptionRequest) returns (google.protobuf.Empty) {};
+  rpc registerForOutputChanges(SubscriptionRequest) returns (stream IOChange) {};
+  rpc unregisterForOutputChanges(UnsubscriptionRequest) returns (google.protobuf.Empty) {};
+}
+
+message SetInputRequest {
+  string name = 1;
+  GenericValue newValue = 2;
+}
+
+message SetInputFeedback {
+  oneof feedbackSignals{
+    bool typeMismatch = 1;
+    bool notFound = 2;
+    bool success = 3;
+  }
+}
+
+message ValueInfo {
+  // whether there was an io with the given name
+  bool success = 1;
+  GenericValue value = 2;
+}
+
+message SubscriptionRequest {
+  int64 clientId = 1;
+  string regex = 2;
+}
+
+message UnsubscriptionRequest {
+  int64 clientId = 1;
+  string regex = 2;
+}
+
+message IOChange {
+  string name = 1;
+  GenericValue old = 2;
+  GenericValue new = 3;
+}
