@@ -53,5 +53,6 @@ include(
     "services.grpc:protos",
     "services.grpc:server",
     "services.grpc:client",
-    "examples"
+    "examples",
+    "ui",
 )

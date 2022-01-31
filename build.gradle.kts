@@ -8,6 +8,8 @@ plugins {
     id("org.jetbrains.dokka") version "1.6.10"
     id("com.google.protobuf") version "0.8.18" apply false
     id("org.owasp.dependencycheck") version "6.5.3" apply false
+    id("org.openjfx.javafxplugin") version "0.0.10" apply false
+    id("org.beryx.jlink") version "2.24.1" apply false
 }
 group = "org.github.mkep-dev.p-logi-k"
 
@@ -30,7 +32,7 @@ subprojects {
         }
     }
 
-    version = "1.0.0"
+    version = "0.0.0-SNAPSHOT"
 
 
     tasks.withType<KotlinCompile> {
