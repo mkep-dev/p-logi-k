@@ -28,7 +28,7 @@ data class EFSM(
     val transitions: List<Transition>,
     val initialState: State,
     val initialOutputValues: List<IOElement<Any>>,
-    val variablesInitialValues: List<VariableAssignment<Any>>
+    val variablesInitialValues: List<VariableAssignment<out Any>>
 ) {
 
     init {
