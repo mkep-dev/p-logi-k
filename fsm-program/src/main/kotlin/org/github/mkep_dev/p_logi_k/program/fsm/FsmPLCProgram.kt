@@ -57,12 +57,6 @@ open class FsmPLCProgram(override val name: String, private val efsm: EFSM, priv
             IOElement(it.name, DataDirection.IN, value)
         }
 
-        // put all timers
-        _variableValues.putAll(efsm.transitions.flatMap { transition -> transition.guard.getOperandsOfType(TimerVariable::class) }
-            .associateWith { Constant.of(0) })
-        // remaining vars
-        _variableValues.putAll(efsm.variablesInitialValues.associate { it.ref to (it.value as Constant) })
-
         _usedOutputs = efsm.initialOutputValues
     }
 
@@ -82,6 +76,15 @@ open class FsmPLCProgram(override val name: String, private val efsm: EFSM, priv
                     (ioAccess.getOutput(replaceAlias(it.identifier), it.valueClass)
                         ?: throw NoSuchElementException("The efsm referenced the output '$it' that is doesn't exist at the PLC."))
         }
+
+        // put all timers
+        _variableValues.clear()
+        _variableValues.putAll(efsm.transitions.flatMap { transition -> transition.guard.getOperandsOfType(TimerVariable::class) }
+            .associateWith { Constant.of(0) })
+        // remaining vars
+        _variableValues.putAll(efsm.variablesInitialValues.associate { it.ref to (it.value as Constant) })
+        // clear timer resets
+        timerResetMillis.clear()
     }
 
     private fun updateTimers(currentMillis: Long) {
@@ -105,20 +108,20 @@ open class FsmPLCProgram(override val name: String, private val efsm: EFSM, priv
     override fun step(millis: Long) {
         updateTimers(millis)
         // Find the transition that will be followed
-        val transition = efsm.transitions.filter { it.start == currentState }.filter {
+        val transition = efsm.transitions.filter { it.start == currentState }.firstOrNull {
             it.guard.computeValue(::provideValues)
-        }.firstOrNull()
+        }
 
         if (transition != null) {// do the assignments etc. if there is a matching transition
-            logger.info { "Take transition '$transition'." }
+            logger.info { "Take transition '$transition' @${millis}ms." }
             currentState = transition.end
-            logger.info { "New state is '$currentState'." }
+            logger.info { "New state is '$currentState' @${millis}ms." }
             transition.varUpdates.forEach {
 
                 if (it.ref is TimerVariable) {
                     timerResetMillis[it.ref] =
                         millis - (it.value.computeValue(::provideValues) as Long).also { newValue ->
-                            logger.debug { "Reset timer '${it.ref}' to $newValue." }
+                            logger.debug { "${millis}ms: Reset timer '${it.ref}' to $newValue." }
                         }
                 } else {
 
