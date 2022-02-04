@@ -85,6 +85,10 @@ open class FsmPLCProgram(override val name: String, private val efsm: EFSM, priv
         _variableValues.putAll(efsm.variablesInitialValues.associate { it.ref to (it.value as Constant) })
         // clear timer resets
         timerResetMillis.clear()
+        // set initial output values
+        efsm.initialOutputValues.forEach { outputAssignment ->
+            _outputAccessMap[outputAssignment.identifier]?.setValue(outputAssignment.value)
+        }
     }
 
     private fun updateTimers(currentMillis: Long) {
