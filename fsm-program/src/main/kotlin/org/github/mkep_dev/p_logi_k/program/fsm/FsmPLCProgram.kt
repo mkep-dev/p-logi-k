@@ -51,7 +51,7 @@ open class FsmPLCProgram(override val name: String, private val efsm: EFSM, priv
         }.map {
             val value = when (it.type) {
                 Boolean::class -> BooleanValue(false)
-                Int::class -> IntegerValue(0)
+                Long::class, Int::class -> IntegerValue(0)
                 else -> throw IllegalArgumentException("FSM uses an input of an unknown type '${it.type}'")
             }
             IOElement(it.name, DataDirection.IN, value)
@@ -106,7 +106,12 @@ open class FsmPLCProgram(override val name: String, private val efsm: EFSM, priv
             is BooleanEdgeInput -> _inputAccessMap[namedProvider.name]!!.edgePolarity == namedProvider.polarity
             is Input -> _inputAccessMap[namedProvider.name]!!.getValue().value
             is Variable -> _variableValues[namedProvider]!!.value
-        }
+        }.let { when(it){
+            is Int -> it.toLong()
+            is Long -> it
+            is Boolean -> it
+            else -> throw IllegalArgumentException("Unknown datatype for '$it'.")
+        } }
     }
 
     override fun step(millis: Long) {

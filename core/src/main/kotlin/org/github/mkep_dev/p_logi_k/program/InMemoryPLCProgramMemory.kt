@@ -19,6 +19,7 @@
 
 package org.github.mkep_dev.p_logi_k.program
 
+import mu.KLogging
 import org.github.mkep_dev.p_logi_k.model.io.IOElement
 import org.github.mkep_dev.p_logi_k.program.api.CyclicPLCProgram
 import org.github.mkep_dev.p_logi_k.program.api.PLCProgramMemory
@@ -37,11 +38,22 @@ class InMemoryPLCProgramMemory(private val availableIOS: List<IOElement<Any>>) :
         if (!program.getUsedInputs()
                 .all { expected -> availableIOS.any { it.direction.isInput() && it.identifier == expected.identifier && it.value.valueClass == expected.valueClass } }
         ) {
+            logger.error {
+                "There are unknown inputs that are required for the program:\n" +
+                program.getUsedInputs()
+                    .filter { expected -> !availableIOS.any { it.direction.isInput() && it.identifier == expected.identifier && it.value.valueClass == expected.valueClass } }
+                    .joinToString()
+            }
             return false
         }
         if (!program.getOutputs()
                 .all { expected -> availableIOS.any { it.direction.isOutput() && it.identifier == expected.identifier && it.value.valueClass == expected.valueClass } }
         ) {
+            logger.error {
+                "There are unknown outputs that are required for the program:\n" + program.getOutputs()
+                    .filter { expected -> !availableIOS.any { it.direction.isOutput() && it.identifier == expected.identifier && it.value.valueClass == expected.valueClass } }
+                    .joinToString()
+            }
             return false
         }
 
@@ -59,5 +71,7 @@ class InMemoryPLCProgramMemory(private val availableIOS: List<IOElement<Any>>) :
     override fun getProgram(name: String): CyclicPLCProgram? {
         return programs[name]
     }
+
+    private companion object : KLogging()
 
 }
