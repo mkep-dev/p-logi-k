@@ -30,7 +30,11 @@ subprojects {
         }
     }
 
-    version = "1.0.0-SNAPSHOT"
+    version = if(project.hasProperty("release.version")){
+        project.findProperty("release.version").toString()
+    }else{
+        "0.0.0-SNAPSHOT"
+    }
 
 
     tasks.withType<KotlinCompile> {
