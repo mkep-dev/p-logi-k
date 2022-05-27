@@ -55,17 +55,19 @@ sealed class GenericValue<out V : Any>(val valueClass: KClass<@UnsafeVariance V>
      * @return the integer value
      */
     @Throws(IllegalStateException::class)
-    fun toInteger() =
-        IntegerValue(
-            when (valueClass) {
-                Int::class -> {
-                    value as Int
+    fun toLong() =
+        LongValue(
+            when (this) {
+                is LongValue -> {
+                    value
                 }
-                Boolean::class -> when (value as Boolean) {
+                is BooleanValue -> when (value) {
                     false -> 0
                     else -> 1
                 }
-                else -> throw IllegalStateException() // Logical impossible
+                is DoubleValue -> {
+                    value.toLong()
+                }
             }
         )
 
@@ -77,12 +79,12 @@ sealed class GenericValue<out V : Any>(val valueClass: KClass<@UnsafeVariance V>
     @Throws(IllegalStateException::class)
     fun toBoolean() =
         BooleanValue(
-            when (valueClass) {
-                Int::class -> {
-                    (value as Int) != 0
+            when (this) {
+                is LongValue -> {
+                    value != 0L
                 }
-                Boolean::class -> value as Boolean
-                else -> throw IllegalStateException() // Logical impossible
+                is BooleanValue -> value
+                is DoubleValue -> value > 0.0
             }
         )
 
@@ -95,12 +97,28 @@ sealed class GenericValue<out V : Any>(val valueClass: KClass<@UnsafeVariance V>
          */
         fun of(value: Boolean) = BooleanValue(value)
         /**
-         * Create a boolean value using the given boolean
+         * Create a long value using the given integer
          *
          * @param value the integer
          * @return the [GenericValue] representation
          */
-        fun of(value: Int) = IntegerValue(value)
+        fun of(value: Int) = LongValue(value.toLong())
+
+        /**
+         * Create a long value using the given [Long]
+         *
+         * @param value the integer
+         * @return the [GenericValue] representation
+         */
+        fun of(value: Long) = LongValue(value)
+
+        /**
+         * Create a double value using the given [Double]
+         *
+         * @param value the double
+         * @return the [GenericValue] representation
+         */
+        fun of(value: Double) = DoubleValue(value)
     }
 
 }
@@ -119,11 +137,21 @@ class BooleanValue(value: Boolean) : GenericValue<Boolean>(Boolean::class, value
  * A integer value
  *
  * @constructor
- * create a value using the given int
+ * create a value using the given long
  *
  * @param value the int
  */
-class IntegerValue(value: Int) : GenericValue<Int>(Int::class, value)
+class LongValue(value: Long) : GenericValue<Long>(Long::class, value)
+
+/**
+ * A double value
+ *
+ * @constructor
+ * create a value using the given double
+ *
+ * @param value the int
+ */
+class DoubleValue(value: Double) : GenericValue<Double>(Double::class, value)
 
 // Functions
 operator fun GenericValue<Boolean>.not(): GenericValue<Boolean> = BooleanValue(!value)

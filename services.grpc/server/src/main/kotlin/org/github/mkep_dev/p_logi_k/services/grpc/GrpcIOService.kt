@@ -180,7 +180,7 @@ class GrpcIOService(private val ioService: IOService, private val logger: KLogge
         return ioService.getIOMap().map {
             val typeClass = when(it.valueClass){
                 Boolean::class -> Type.BOOLEAN
-                Int::class -> Type.INTEGER
+                Int::class, Long::class -> Type.INTEGER
                 Double::class -> Type.DOUBLE
                 else -> Type.UNRECOGNIZED
             }

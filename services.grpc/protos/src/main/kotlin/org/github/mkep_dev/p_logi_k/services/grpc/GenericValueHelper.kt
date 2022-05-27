@@ -20,28 +20,29 @@
 package org.github.mkep_dev.p_logi_k.services.grpc
 
 import org.github.mkep_dev.p_logi_k.io.BooleanValue
+import org.github.mkep_dev.p_logi_k.io.DoubleValue
 import org.github.mkep_dev.p_logi_k.io.GenericValue
-import org.github.mkep_dev.p_logi_k.io.IntegerValue
+import org.github.mkep_dev.p_logi_k.io.LongValue
 import org.github.mkep_dev.p_logi_k.services.grpc.stub.Type
 import org.github.mkep_dev.p_logi_k.services.grpc.stub.genericValue
 
 object GenericValueHelper {
 
     fun mapGenericValueToMsg(ioValue: GenericValue<Any>) = genericValue {
-        when (ioValue.valueClass) {
-            Boolean::class -> {
-                value = when (ioValue.value as Boolean) {
+        when (ioValue) {
+            is BooleanValue -> {
+                value = when (ioValue.value) {
                     true -> 1.0
                     false -> -1.0
                 }
                 type = Type.BOOLEAN
             }
-            Int::class -> {
-                value = (ioValue.value as Int).toDouble()
+            is LongValue -> {
+                value = ioValue.value.toDouble()
                 type = Type.INTEGER
             }
-            Double::class -> {
-                value = (ioValue.value as Double)
+            is DoubleValue -> {
+                value = ioValue.value
                 type = Type.DOUBLE
             }
             else -> {
@@ -53,7 +54,7 @@ object GenericValueHelper {
     fun mapMsgToGenericValue(msg: org.github.mkep_dev.p_logi_k.services.grpc.stub.GenericValue): GenericValue<Any>? {
         return when (msg.type) {
             Type.BOOLEAN -> BooleanValue(msg.value > 0)
-            Type.INTEGER -> IntegerValue(msg.value.toInt())
+            Type.INTEGER -> LongValue(msg.value.toLong())
             Type.DOUBLE -> throw NotImplementedError("Double values are yet not supported. But prepared in msgs.")
             Type.UNKNOWN, Type.UNRECOGNIZED, null -> null
         }

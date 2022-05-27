@@ -24,7 +24,7 @@ import org.github.mkep_dev.p_logi_k.Identifier
 import org.github.mkep_dev.p_logi_k.io.BooleanValue
 import org.github.mkep_dev.p_logi_k.io.GenericInput
 import org.github.mkep_dev.p_logi_k.io.GenericOutput
-import org.github.mkep_dev.p_logi_k.io.IntegerValue
+import org.github.mkep_dev.p_logi_k.io.LongValue
 import org.github.mkep_dev.p_logi_k.model.io.DataDirection
 import org.github.mkep_dev.p_logi_k.model.io.IOElement
 import org.github.mkep_dev.p_logi_k.program.api.CyclicPLCProgram
@@ -45,23 +45,19 @@ open class FsmPLCProgram(override val name: String, private val efsm: EFSM, priv
     private val _variableValues: MutableMap<Variable<out Any>, Constant<out Any>> = mutableMapOf()
     private val timerResetMillis: MutableMap<TimerVariable, Long> = mutableMapOf()
 
+    private var automatonTimersInitialized = false
+
     init {
         _usedInputs = efsm.transitions.flatMap { transition ->
             transition.guard.getOperandsOfType(Input::class)
         }.map {
             val value = when (it.type) {
                 Boolean::class -> BooleanValue(false)
-                Int::class -> IntegerValue(0)
+                Long::class, Int::class -> LongValue(0)
                 else -> throw IllegalArgumentException("FSM uses an input of an unknown type '${it.type}'")
             }
             IOElement(it.name, DataDirection.IN, value)
         }
-
-        // put all timers
-        _variableValues.putAll(efsm.transitions.flatMap { transition -> transition.guard.getOperandsOfType(TimerVariable::class) }
-            .associateWith { Constant.of(0) })
-        // remaining vars
-        _variableValues.putAll(efsm.variablesInitialValues.associate { it.ref to (it.value as Constant) })
 
         _usedOutputs = efsm.initialOutputValues
     }
@@ -82,6 +78,20 @@ open class FsmPLCProgram(override val name: String, private val efsm: EFSM, priv
                     (ioAccess.getOutput(replaceAlias(it.identifier), it.valueClass)
                         ?: throw NoSuchElementException("The efsm referenced the output '$it' that is doesn't exist at the PLC."))
         }
+
+        // put all timers
+        _variableValues.clear()
+        _variableValues.putAll(efsm.transitions.flatMap { transition -> transition.guard.getOperandsOfType(TimerVariable::class) }
+            .associateWith { Constant.of(0) })
+        // remaining vars
+        _variableValues.putAll(efsm.variablesInitialValues.associate { it.ref to (it.value as Constant) })
+        // clear timer resets
+        timerResetMillis.clear()
+        automatonTimersInitialized = false
+        // set initial output values
+        efsm.initialOutputValues.forEach { outputAssignment ->
+            _outputAccessMap[outputAssignment.identifier]?.setValue(outputAssignment.value)
+        }
     }
 
     private fun updateTimers(currentMillis: Long) {
@@ -99,27 +109,41 @@ open class FsmPLCProgram(override val name: String, private val efsm: EFSM, priv
             is BooleanEdgeInput -> _inputAccessMap[namedProvider.name]!!.edgePolarity == namedProvider.polarity
             is Input -> _inputAccessMap[namedProvider.name]!!.getValue().value
             is Variable -> _variableValues[namedProvider]!!.value
-        }
+        }.let { when(it){
+            is Int -> it.toLong()
+            is Long -> it
+            is Boolean -> it
+            else -> throw IllegalArgumentException("Unknown datatype for '$it'.")
+        } }
     }
 
     override fun step(millis: Long) {
+        // init the automaton on first step by resetting all timer
+        if(!automatonTimersInitialized){
+            logger.debug { "Reset all timers on program start." }
+            _variableValues.filter { it.key is TimerVariable }.forEach {
+                @Suppress("UNCHECKED_CAST")
+                resetTimer(it.key as TimerVariable,it.value as Operand<Long>,millis)
+            }
+            automatonTimersInitialized = true
+        }
+
         updateTimers(millis)
         // Find the transition that will be followed
-        val transition = efsm.transitions.filter { it.start == currentState }.filter {
+        val transition = efsm.transitions.filter { it.start == currentState }.firstOrNull {
             it.guard.computeValue(::provideValues)
-        }.firstOrNull()
+        }
 
         if (transition != null) {// do the assignments etc. if there is a matching transition
-            logger.info { "Take transition '$transition'." }
+            logger.info { "Take transition '$transition' @${millis}ms." }
             currentState = transition.end
-            logger.info { "New state is '$currentState'." }
+            logger.info { "New state is '$currentState' @${millis}ms." }
+            _variableValues.filter { it.key is  TimerVariable}.forEach { logger.trace { "Timer variable ${it.key} was ${it.value.value}" }}
             transition.varUpdates.forEach {
 
                 if (it.ref is TimerVariable) {
-                    timerResetMillis[it.ref] =
-                        millis - (it.value.computeValue(::provideValues) as Long).also { newValue ->
-                            logger.debug { "Reset timer '${it.ref}' to $newValue." }
-                        }
+                    @Suppress("UNCHECKED_CAST")
+                    resetTimer(it.ref,it.value as Operand<Long>,millis)
                 } else {
 
                     val newValue = it.value.computeValue(::provideValues).let { value ->
@@ -137,6 +161,14 @@ open class FsmPLCProgram(override val name: String, private val efsm: EFSM, priv
                 _outputAccessMap[outputAssignment.output]?.setValue(outputAssignment.value)
             }
         }
+    }
+
+    private fun resetTimer(timerVariable:TimerVariable, timerVariableAssignment: Operand<Long>,millis: Long){
+        timerResetMillis[timerVariable] =
+            millis - (timerVariableAssignment.computeValue(::provideValues)).also { newValue ->
+                logger.debug { "${millis}ms: Reset timer '${timerVariable}' to $newValue." }
+            }
+
     }
 
     override fun getUsedInputs(): Set<IOElement<Any>> =

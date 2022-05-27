@@ -203,7 +203,7 @@ class IORepository(elements: Iterable<IOElement<Any>>) : Map<Identifier, IOEleme
                 // Store update events
                 updateEvents.add(UpdateEvent(it.first, oldVal.value, it.second, oldVal.direction))
                 if (oldVal.value != it.second) {
-                    logger.trace { "Update value of '${it.first}' from '$oldVal' to '${it.second}'." }
+                    logger.trace { "Update value of '${it.first}' from '$oldVal' to '${it.second}' with polarity ${polarities[it.first]}." }
                 }
                 it.first to oldVal.withValue(it.second)!!
             })

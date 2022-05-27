@@ -82,7 +82,7 @@ class IORepositoryTest {
                     it.direction,
                     GenericValue.of(it.value.toBoolean().value.not())
                 )
-                else -> IOElement(it.identifier, it.direction, GenericValue.of(it.value.toInteger().value.inc()))
+                else -> IOElement(it.identifier, it.direction, GenericValue.of(it.value.toLong().value.inc()))
             }
         // Only change outputs
         val newOutputs = allElements.filter { it.direction.isOutput() }.map(::dataManipulation)
@@ -121,7 +121,7 @@ class IORepositoryTest {
                     it.direction,
                     GenericValue.of(it.value.toBoolean().value.not())
                 )
-                else -> IOElement(it.identifier, it.direction, GenericValue.of(it.value.toInteger().value.inc()))
+                else -> IOElement(it.identifier, it.direction, GenericValue.of(it.value.toLong().value.inc()))
             }
 
         // only outputs
@@ -174,19 +174,19 @@ class IORepositoryTest {
         )
         // Check concurrency
         val numberOfIncrements = 10
-        val changedInt = repository.getAll().first { it.value.valueClass == Int::class }
+        val changedInt = repository.getAll().first { it.value.valueClass == Long::class }
         val changedIntId = changedInt.run { identifier }
         runBlocking {
             repeat(numberOfIncrements) {
                 launch {
-                    repository.setIO(changedIntId) { GenericValue.of(it.toInteger().value.inc()) }
+                    repository.setIO(changedIntId) { GenericValue.of(it.toLong().value.inc()) }
                 }
             }
         }
         // Because of our good concurrent behaviour the int should be correct
         Assertions.assertEquals(
-            numberOfIncrements,
-            repository.getIO(changedIntId)!!.value.let { it.toInteger().value } - changedInt.value.let { it.toInteger().value },
+            numberOfIncrements.toLong(),
+            repository.getIO(changedIntId)!!.value.toLong().value - changedInt.value.toLong().value,
             "Repository misbehaves with multiple threads"
         )
     }
@@ -225,8 +225,8 @@ class IORepositoryTest {
     fun checkSubscription() {
         fun dataManipulation(value: GenericValue<Any>) =
             when (value.valueClass) {
-                Boolean::class -> GenericValue.of(value.let { it.toBoolean().value }.not())
-                else -> GenericValue.of(value.let { it.toInteger().value }.inc())
+                Boolean::class -> GenericValue.of(value.toBoolean().value.not())
+                else -> GenericValue.of(value.toLong().value.inc())
             }
 
         fun transform(it: IOElement<Any>) =
