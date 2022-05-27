@@ -19,7 +19,6 @@
 
 package org.github.mkep_dev.p_logi_k.services.grpc
 
-import org.github.mkep_dev.p_logi_k.io.GenericValue
 import org.github.mkep_dev.p_logi_k.model.io.DataDirection
 import org.github.mkep_dev.p_logi_k.services.grpc.stub.Direction
 
@@ -32,23 +31,10 @@ internal fun mapMsgToIoElement(ioElement: org.github.mkep_dev.p_logi_k.services.
     }
     val value = GenericValueHelper.mapMsgToGenericValue(ioElement.value)
         ?: throw IllegalArgumentException("Value can't be mapped to generic value because the data type is unknown.")
-    @Suppress("UNCHECKED_CAST") // Casts are checked by when statement
-    return when (value.valueClass) {
-        Boolean::class -> org.github.mkep_dev.p_logi_k.model.io.IOElement(
-            ioElement.id,
-            direction,
-            value as GenericValue<Boolean>
-        )
-        Int::class -> org.github.mkep_dev.p_logi_k.model.io.IOElement(
-            ioElement.id,
-            direction,
-            value as GenericValue<Int>
-        )
-        Double::class -> org.github.mkep_dev.p_logi_k.model.io.IOElement(
-            ioElement.id,
-            direction,
-            value as GenericValue<Double>
-        )
-        else -> throw IllegalStateException("The data type of generic value is unknown.")
-    }
+
+    return org.github.mkep_dev.p_logi_k.model.io.IOElement(
+        ioElement.id,
+        direction,
+        value
+    )
 }

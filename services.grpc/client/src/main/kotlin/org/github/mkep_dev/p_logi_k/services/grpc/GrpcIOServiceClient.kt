@@ -60,10 +60,10 @@ internal class GrpcIOServiceClient(private val grpcIoServiceStub: IOServiceBlock
             }
             val clazz = when (it.type) {
                 Type.BOOLEAN -> Boolean::class
-                Type.INTEGER -> Int::class
+                Type.INTEGER -> Long::class
                 Type.DOUBLE -> Double::class
                 Type.UNKNOWN, Type.UNRECOGNIZED -> return@mapNotNull null
-                else -> return@mapNotNull null
+                null -> return@mapNotNull null
             }
             IOReference(it.id, dir, clazz)
         }
